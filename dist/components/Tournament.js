@@ -965,9 +965,9 @@ _Tournament_instances = new WeakSet(), _Tournament_createMatches = function _Tou
             return matchA.round - matchB.round;
         });
         player.player.matches.filter(match => this.matches.find(m => m.id === match.id && m.active === false)).forEach(match => {
-            player.gamePoints += (this.scoring.win * match.win) + (this.scoring.loss * match.loss) + (this.scoring.draw * match.draw);
+            player.gamePoints += match.bye ? this.scoring.bye : (this.scoring.win * match.win) + (this.scoring.loss * match.loss) + (this.scoring.draw * match.draw);
             player.games += match.win + match.loss + match.draw;
-            player.matchPoints += match.win > match.loss ? this.scoring.win : match.loss > match.win ? this.scoring.loss : this.scoring.draw;
+            player.matchPoints += match.bye ? this.scoring.bye : match.win > match.loss ? this.scoring.win : match.loss > match.win ? this.scoring.loss : this.scoring.draw;
             player.tiebreaks.cumulative += player.matchPoints;
             player.matches++;
         });
