@@ -1,7 +1,7 @@
-import { Player } from './Player.js';
-import { StandingsValues } from '../interfaces/StandingsValues.js';
-import { TournamentValues } from '../interfaces/TournamentValues.js';
-import { SettableTournamentValues } from '../interfaces/SettableTournamentValues.js';
+import { Player } from "./Player.js";
+import { StandingsValues } from "../interfaces/StandingsValues.js";
+import { TournamentValues } from "../interfaces/TournamentValues.js";
+import { SettableTournamentValues } from "../interfaces/SettableTournamentValues.js";
 /**
  * Class representing a tournament.
  *
@@ -10,29 +10,29 @@ import { SettableTournamentValues } from '../interfaces/SettableTournamentValues
 export declare class Tournament {
     #private;
     /** Unique ID of the tournament */
-    id: TournamentValues['id'];
+    id: TournamentValues["id"];
     /** Name of the tournament */
-    name: TournamentValues['name'];
+    name: TournamentValues["name"];
     /** Current state of the tournament */
-    status: TournamentValues['status'];
+    status: TournamentValues["status"];
     /** Current round of the tournament */
-    round: TournamentValues['round'];
+    round: TournamentValues["round"];
     /** All players in the tournament */
-    players: TournamentValues['players'];
+    players: TournamentValues["players"];
     /** All matches of the tournament */
-    matches: TournamentValues['matches'];
+    matches: TournamentValues["matches"];
     /** If order of players in matches matters */
-    colored: TournamentValues['colored'];
+    colored: TournamentValues["colored"];
     /** Sorting method, if players are rated/seeded */
-    sorting: TournamentValues['sorting'];
+    sorting: TournamentValues["sorting"];
     /** Details regarding scoring */
-    scoring: TournamentValues['scoring'];
+    scoring: TournamentValues["scoring"];
     /** Details regarding the tournament */
-    stageOne: TournamentValues['stageOne'];
+    stageOne: TournamentValues["stageOne"];
     /** Details regarding playoffs */
-    stageTwo: TournamentValues['stageTwo'];
+    stageTwo: TournamentValues["stageTwo"];
     /** Any extra information */
-    meta: TournamentValues['meta'];
+    meta: TournamentValues["meta"];
     /**
      * Create a new tournament.
      * @param id Unique ID of the tournament
