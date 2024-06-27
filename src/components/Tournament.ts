@@ -317,6 +317,7 @@ export class Tournament {
             .map((match) => match.opponent)
             .filter((opp) => opp !== null),
           colors: player.matches
+            .filter((m) => !m.bye)
             .map((match) => match.color)
             .filter((color) => color !== null),
           rating: player.value,
