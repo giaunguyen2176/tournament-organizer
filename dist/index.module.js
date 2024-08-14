@@ -1443,113 +1443,98 @@ function Swiss(players, round, rated = false, colors = false) {
         playerArray = [...new Array(players)].map((_, i) => i + 1);
     }
     if (rated) {
-        playerArray
-            .filter((p) => !p.hasOwnProperty("rating") || p.rating === null)
-            .forEach((p) => (p.rating = 0));
+        playerArray.filter(p => !p.hasOwnProperty('rating') || p.rating === null).forEach(p => p.rating = 0);
     }
     if (colors) {
-        playerArray
-            .filter((p) => !p.hasOwnProperty("colors"))
-            .forEach((p) => (p.colors = []));
+        playerArray.filter(p => !p.hasOwnProperty('colors')).forEach(p => p.colors = []);
     }
-    playerArray
-        .sort((p1, p2) => p2.score - p1.score || p2.rating - p1.rating)
-        .forEach((p, i) => (p.index = i));
-    let pairs = [];
-    // devide into score groups
-    const scoreGroupsWithPlayers = playerArray.reduce((obj, v) => {
-        if (!obj[v.score]) {
-            obj[v.score] = [];
-        }
-        obj[v.score].push(v);
-        return obj;
-    }, {});
-    const scoreGroups = Object.keys(scoreGroupsWithPlayers).sort((s1, s2) => Number(s2) - Number(s1));
-    // find the lowest rank of the lowest score group to assign bye
-    // remove player from array to avoid it from being paired
-    let match = 1;
-    let byeMatch = null;
-    if (playerArray.length % 2 > 0) {
-        for (let i = scoreGroups.length - 1; i >= 0; i--) {
-            const score = scoreGroups[i];
-            const players = scoreGroupsWithPlayers[score];
-            const byeables = players.filter((p) => !p.hasOwnProperty("receivedBye") || !p.receivedBye);
-            const bye = byeables.sort((p1, p2) => p1.rating - p2.rating)[0];
-            if (!bye) {
-                continue;
+    playerArray.forEach((p, i) => p.index = i);
+    const scoreGroups = [...new Set(playerArray.map(p => p.score))].sort((a, b) => a - b);
+    const scoreSums = [...new Set(scoreGroups.map((s, i, a) => {
+            let sums = [];
+            for (let j = i; j < a.length; j++) {
+                sums.push(s + a[j]);
             }
-            playerArray = playerArray.filter((p) => p.id !== bye.id);
-            byeMatch = {
-                round: round,
-                match: match++,
-                player1: bye.id,
-                player2: null,
-            };
-            break;
-        }
-    }
-    // give weight depends on the sum score of two players / distance between the two players
-    // the higher sum score and the closer two players are together, then the higher weight they get
-    // that way, pairs will follow Swiss rule
+            return sums;
+        }).flat())].sort((a, b) => a - b);
+    let pairs = [];
     for (let i = 0; i < playerArray.length; i++) {
         const curr = playerArray[i];
         const next = playerArray.slice(i + 1);
+        const sorted = rated ? [...next].sort((a, b) => Math.abs(curr.rating - a.rating) - Math.abs(curr.rating - b.rating)) : [];
         for (let j = 0; j < next.length; j++) {
             const opp = next[j];
-            if (curr.hasOwnProperty("avoid") && curr.avoid.includes(opp.id)) {
+            if (curr.hasOwnProperty('avoid') && curr.avoid.includes(opp.id)) {
                 continue;
             }
-            let wt = 0;
-            if (wt === 0) {
-                wt += 0.1;
+            let wt = 14 * Math.log10(scoreSums.findIndex(s => s === curr.score + opp.score) + 1);
+            const scoreGroupDiff = Math.abs(scoreGroups.findIndex(s => s === curr.score) - scoreGroups.findIndex(s => s === opp.score));
+            wt += scoreGroupDiff < 2 ? 3 / Math.log10(scoreGroupDiff + 2) : 1 / Math.log10(scoreGroupDiff + 2);
+            if (scoreGroupDiff === 1 && curr.hasOwnProperty('pairedUpDown') && curr.pairedUpDown === false && opp.hasOwnProperty('pairedUpDown') && opp.pairedUpDown === false) {
+                wt += 1.2;
             }
-            const sum = curr.score + opp.score;
-            wt += sum / (j + 1);
+            if (rated) {
+                wt += (Math.log2(sorted.length) - Math.log2(sorted.findIndex(p => p.id === opp.id) + 1)) / 3;
+            }
             if (colors) {
-                const oppScore = opp.colors.reduce((sum, color) => (color === "w" ? sum + 1 : sum - 1), 0);
-                if (curr.colors.length > 1 && curr.colors.slice(-2).join("") === "ww") {
-                    if (opp.colors.slice(-2).join("") === "ww") {
+                const colorScore = curr.colors.reduce((sum, color) => color === 'w' ? sum + 1 : sum - 1, 0);
+                const oppScore = opp.colors.reduce((sum, color) => color === 'w' ? sum + 1 : sum - 1, 0);
+                if (curr.colors.length > 1 && curr.colors.slice(-2).join('') === 'ww') {
+                    if (opp.colors.slice(-2).join('') === 'ww') {
                         continue;
                     }
-                    else if (opp.colors.slice(-2).join("") === "bb") {
+                    else if (opp.colors.slice(-2).join('') === 'bb') {
                         wt += 7;
                     }
                     else {
                         wt += 2 / Math.log(4 - Math.abs(oppScore));
                     }
                 }
-                else if (curr.colors.length > 1 &&
-                    curr.colors.slice(-2).join("") === "bb") {
-                    if (opp.colors.slice(-2).join("") === "bb") {
+                else if (curr.colors.length > 1 && curr.colors.slice(-2).join('') === 'bb') {
+                    if (opp.colors.slice(-2).join('') === 'bb') {
                         continue;
                     }
-                    else if (opp.colors.slice(-2).join("") === "ww") {
+                    else if (opp.colors.slice(-2).join('') === 'ww') {
                         wt += 8;
                     }
                     else {
                         wt += 2 / Math.log(4 - Math.abs(oppScore));
                     }
                 }
+                else {
+                    wt += 5 / (4 * Math.log10(10 - Math.abs(colorScore - oppScore)));
+                }
+            }
+            if ((curr.hasOwnProperty('receivedBye') && curr.receivedBye) || (opp.hasOwnProperty('receivedBye') && opp.receivedBye)) {
+                wt *= 1.5;
             }
             pairs.push([curr.index, opp.index, wt]);
         }
     }
+    if (pairs.length === 0) {
+        return [];
+    }
     const blossomPairs = blossom$1(pairs, true);
     let playerCopy = [...playerArray];
+    let byeArray = [];
+    let match = 1;
     do {
         const indexA = playerCopy[0].index;
         const indexB = blossomPairs[indexA];
+        if (indexB === -1) {
+            byeArray.push(playerCopy.splice(0, 1)[0]);
+            continue;
+        }
         playerCopy.splice(0, 1);
-        playerCopy.splice(playerCopy.findIndex((p) => p.index === indexB), 1);
-        let playerA = playerArray.find((p) => p.index === indexA);
-        let playerB = playerArray.find((p) => p.index === indexB);
+        playerCopy.splice(playerCopy.findIndex(p => p.index === indexB), 1);
+        let playerA = playerArray.find(p => p.index === indexA);
+        let playerB = playerArray.find(p => p.index === indexB);
         if (colors) {
-            const aScore = playerA.colors.reduce((sum, color) => (color === "w" ? sum + 1 : sum - 1), 0);
-            const bScore = playerB.colors.reduce((sum, color) => (color === "w" ? sum + 1 : sum - 1), 0);
-            if (playerB.colors.slice(-2).join("") === "bb" ||
-                playerA.colors.slice(-2).join("") === "ww" ||
-                (playerB.colors.slice(-1) === "b" &&
-                    playerA.colors.slice(-1) === "w") ||
+            const aScore = playerA.colors.reduce((sum, color) => color === 'w' ? sum + 1 : sum - 1, 0);
+            const bScore = playerB.colors.reduce((sum, color) => color === 'w' ? sum + 1 : sum - 1, 0);
+            if (playerB.colors.slice(-2).join('') === 'bb' ||
+                playerA.colors.slice(-2).join('') === 'ww' ||
+                (playerB.colors.slice(-1) === 'b' && playerA.colors.slice(-1) === 'w') ||
                 bScore < aScore) {
                 [playerA, playerB] = [playerB, playerA];
             }
@@ -1558,12 +1543,17 @@ function Swiss(players, round, rated = false, colors = false) {
             round: round,
             match: match++,
             player1: playerA.id,
-            player2: playerB.id,
+            player2: playerB.id
         });
-    } while (playerCopy.length >
-        blossomPairs.reduce((sum, idx) => (idx === -1 ? sum + 1 : sum), 0));
-    if (byeMatch) {
-        matches.push(byeMatch);
+    } while (playerCopy.length > blossomPairs.reduce((sum, idx) => idx === -1 ? sum + 1 : sum, 0));
+    byeArray = [...byeArray, ...playerCopy];
+    for (let i = 0; i < byeArray.length; i++) {
+        matches.push({
+            round: round,
+            match: match++,
+            player1: byeArray[i].id,
+            player2: null
+        });
     }
     return matches;
 }
@@ -1582,6 +1572,7 @@ class Player {
         this.value = 0;
         this.matches = [];
         this.meta = {};
+        this.avoid = [];
     }
     /** Set information about the player (only changes in information need to be included in the object). */
     set values(options) {
@@ -2661,9 +2652,10 @@ _Tournament_instances = new WeakSet(), _Tournament_createMatches = function _Tou
                         : sum + this.scoring.draw, 0),
                 pairedUpDown: player.matches.some((match) => match.pairUpDown === true),
                 receivedBye: player.matches.some((match) => match.bye === true),
-                avoid: player.matches
-                    .map((match) => match.opponent)
-                    .filter((opp) => opp !== null),
+                avoid: [
+                    ...player.matches.map((match) => match.opponent).filter((opp) => opp !== null),
+                    ...(player.avoid || []),
+                ],
                 colors: player.matches
                     .filter((m) => !m.bye)
                     .map((match) => match.color)
@@ -2904,7 +2896,8 @@ class Manager {
             newPlayer.values = {
                 active: player.active,
                 value: player.value,
-                matches: player.matches
+                matches: player.matches,
+                avoid: player.avoid,
             };
         });
         tourney.matches.forEach(match => {

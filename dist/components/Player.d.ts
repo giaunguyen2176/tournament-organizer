@@ -18,6 +18,8 @@ export declare class Player {
     matches: PlayerValues['matches'];
     /** Any extra information */
     meta: PlayerValues['meta'];
+    /** List of player ids to avoid */
+    avoid: PlayerValues['avoid'];
     /** Create a new player. */
     constructor(id: string, name: string);
     /** Set information about the player (only changes in information need to be included in the object). */

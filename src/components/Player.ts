@@ -25,6 +25,9 @@ export class Player {
     /** Any extra information */
     meta: PlayerValues['meta'];
 
+    /** List of player ids to avoid */
+    avoid: PlayerValues['avoid'];
+
     /** Create a new player. */
     constructor(id: string, name: string) {
         this.id = id;
@@ -33,6 +36,7 @@ export class Player {
         this.value = 0;
         this.matches = [];
         this.meta = {};
+        this.avoid = [];
     }
 
     /** Set information about the player (only changes in information need to be included in the object). */

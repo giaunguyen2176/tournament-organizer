@@ -12,6 +12,7 @@ export class Player {
         this.value = 0;
         this.matches = [];
         this.meta = {};
+        this.avoid = [];
     }
     /** Set information about the player (only changes in information need to be included in the object). */
     set values(options) {

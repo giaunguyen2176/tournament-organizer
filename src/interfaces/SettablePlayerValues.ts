@@ -22,5 +22,6 @@ export interface SettablePlayerValues {
     }>,
     meta?: {
         [key: string]: any
-    }
+    },
+    avoid?: string[],
 }

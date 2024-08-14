@@ -69,4 +69,7 @@ export interface PlayerValues {
     meta: {
         [key: string]: any
     }
+
+    /** List of user ids to avoid */
+    avoid: string[];
 }

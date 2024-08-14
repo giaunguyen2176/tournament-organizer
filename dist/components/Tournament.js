@@ -1027,9 +1027,10 @@ _Tournament_instances = new WeakSet(), _Tournament_createMatches = function _Tou
                         : sum + this.scoring.draw, 0),
                 pairedUpDown: player.matches.some((match) => match.pairUpDown === true),
                 receivedBye: player.matches.some((match) => match.bye === true),
-                avoid: player.matches
-                    .map((match) => match.opponent)
-                    .filter((opp) => opp !== null),
+                avoid: [
+                    ...player.matches.map((match) => match.opponent).filter((opp) => opp !== null),
+                    ...(player.avoid || []),
+                ],
                 colors: player.matches
                     .filter((m) => !m.bye)
                     .map((match) => match.color)

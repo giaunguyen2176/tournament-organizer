@@ -65,7 +65,8 @@ export class Manager {
             newPlayer.values = {
                 active: player.active,
                 value: player.value,
-                matches: player.matches
+                matches: player.matches,
+                avoid: player.avoid,
             }
         });
         tourney.matches.forEach(match => {
